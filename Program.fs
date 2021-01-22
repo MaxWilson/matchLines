@@ -18,6 +18,9 @@ let (|Optional|) flagName input =
 
 let flip f x y = f y x
 
+module Seq =
+    let every f seq = Seq.exists (f >> not) seq |> not
+
 [<EntryPoint>]
 let main argv =
     match argv |> List.ofArray with
@@ -38,8 +41,13 @@ let main argv =
         let rec recur dir =
             for file in Directory.EnumerateFiles dir |> Seq.filter pathFilter do
                 let fileName = Path.GetFileName file
-                for line in File.ReadLines file |> Seq.filter (fun ln -> patterns |> List.exists (flip isMatch ln))  do
-                    printfn $"{fileName}: {line}"
+                let lines = File.ReadLines file |> Seq.filter (fun ln -> patterns |> List.exists (flip isMatch ln)) |> Array.ofSeq
+                // has to match all patterns in order to qualify for printout
+                if patterns |> Seq.every (fun p -> lines |> Seq.exists (isMatch p)) then
+                    printfn "%s" fileName
+                    for line in lines do
+                        printfn "%s" line
+                    printfn ""
             for d in Directory.EnumerateDirectories dir |> Seq.filter directoryFilter do
                 recur d
         recur dir
