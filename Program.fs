@@ -32,7 +32,7 @@ let main argv =
         let isMatch (pattern: string) input = Regex.IsMatch(input, (pattern.Replace(".", "\.").Replace("*", ".*")), RegexOptions.IgnoreCase)
         let pathFilter =
             match fileFilter with
-            | Some pattern -> isMatch pattern
+            | Some pattern -> fun (filePath: string) -> filePath |> Path.GetFileName |> (isMatch pattern)
             | None -> fun _ -> true
         let directoryFilter =
             match df with
