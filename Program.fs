@@ -29,7 +29,7 @@ let main argv =
             match dir with
             | None -> Environment.CurrentDirectory
             | Some v -> Path.Combine(Environment.CurrentDirectory, v)
-        let isMatch (pattern: string) input = Regex.IsMatch(input, (pattern.Replace(".", "\.").Replace("*", ".*")))
+        let isMatch (pattern: string) input = Regex.IsMatch(input, (pattern.Replace(".", "\.").Replace("*", ".*")), RegexOptions.IgnoreCase)
         let pathFilter =
             match fileFilter with
             | Some pattern -> isMatch pattern
