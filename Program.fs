@@ -25,7 +25,7 @@ module Seq =
 let main argv =
     match argv |> List.ofArray with
     | Optional "d" (dir, Optional "df" (df, Optional "f" (fileFilter, (_::_ as patterns)))) ->
-        let dir =
+        let rootDir =
             match dir with
             | None -> Environment.CurrentDirectory
             | Some v -> Path.Combine(Environment.CurrentDirectory, v)
@@ -44,12 +44,12 @@ let main argv =
                 let lines = File.ReadLines file |> Seq.filter (fun ln -> patterns |> List.exists (flip isMatch ln)) |> Array.ofSeq
                 // has to match all patterns in order to qualify for printout
                 if patterns |> Seq.every (fun p -> lines |> Seq.exists (isMatch p)) then
-                    printfn "%s" fileName
+                    printfn "%s" (file.Replace(rootDir + Path.DirectorySeparatorChar.ToString(), "")) // trim root directory from output
                     for line in lines do
                         printfn "%s" line
                     printfn ""
             for d in Directory.EnumerateDirectories dir |> Seq.filter directoryFilter do
                 recur d
-        recur dir
+        recur rootDir
     | _ -> printfn "Usage: matchLines [-d <directory>] [-df <directoryFilter>] [-f <pathFilter>] <patterns...>"
     0 // return an integer exit code
