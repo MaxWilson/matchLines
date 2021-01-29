@@ -24,7 +24,7 @@ module Seq =
 [<EntryPoint>]
 let main argv =
     match argv |> List.ofArray with
-    | Optional "d" (dir, Optional "df" (df, Optional "f" (fileFilter, (_::_ as patterns)))) ->
+    | Optional "d" (dir, Optional "de" (de, Optional "df" (df, Optional "f" (fileFilter, (_::_ as patterns))))) ->
         let rootDir =
             match dir with
             | None -> Environment.CurrentDirectory
@@ -35,9 +35,11 @@ let main argv =
             | Some pattern -> fun (filePath: string) -> filePath |> Path.GetFileName |> (isMatch pattern)
             | None -> fun _ -> true
         let directoryFilter =
-            match df with
-            | Some pattern -> isMatch pattern
-            | None -> fun _ -> true
+            match df, de with
+            | Some include, Some exclude -> (fun x -> isMatch include x && not (isMatch exclude x))
+            | None, Some exclude -> isMatch exclude >> not
+            | Some include, None-> isMatch include
+            | None, None -> fun _ -> true
         let rec recur dir =
             for file in Directory.EnumerateFiles dir |> Seq.filter pathFilter do
                 let fileName = Path.GetFileName file
@@ -51,5 +53,5 @@ let main argv =
             for d in Directory.EnumerateDirectories dir |> Seq.filter directoryFilter do
                 recur d
         recur rootDir
-    | _ -> printfn "Usage: matchLines [-d <directory>] [-df <directoryFilter>] [-f <pathFilter>] <patterns...>"
+    | _ -> printfn "Usage: matchLines [-d <directory>] [-df <directoryFilter>] [-de <directories to exclude>] [-f <pathFilter>] <patterns...>"
     0 // return an integer exit code
